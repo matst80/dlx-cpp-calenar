@@ -1,29 +1,51 @@
 <!doctype html>
 <html>
+
+<head>
+  <title>Exact cover solver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 <style>
   * {
     box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: radial-gradient( circle 610px at 5.2% 51.6%,  rgba(5,8,114,1) 0%, rgba(7,3,53,1) 97.5% );
+    color: #fff;
+    height: 100%;
+  }
+  body {
+    margin:0;
+    padding: 0;
+    height: 100%;
   }
 
   #grid {
-    display: flex;
-    flex-direction: column;
+    margin: 3rem auto;
+    width: 500px;
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 2px;
+  }
+
+  .dayspan {
+    text-align: center;
+    display: block;
+    width: 100%;
   }
 
   #grid>div {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
     display: flex;
-    flex-direction: row;
-  }
-
-  #grid>div>div {
     align-items: center;
-    align-content: center;
-    text-align: center;
-    vertical-align: middle;
-    line-height: 80px;
     font-size: 18px;
-    width: 80px;
-    height: 80px;
   }
 
   .v-P {
@@ -67,31 +89,49 @@
   }
 
   .blank {
-    background-color: #fff;
+    background-color: transparent;
+  }
+
+  .settings {
+    background-color: #ffffff22;
+    padding: 2rem;
   }
 
   input {
     width: 100%;
   }
+
+  @media only screen and (min-width: 600px) {
+    .settings {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      right: 2rem;
+      border-radius: 2rem;
+      
+      background-color: #ffffff22;
+    } 
+  }
 </style>
 
 <body>
-  <p>
-    <label>Max number of solutions&nbsp;<span id="noalt"></span></label>
-    <input type="range" min="1" max="3000" value="1" class="slider" id="altmax">
-  </p>
+
   <div id="grid">
   </div>
-  <div id="date">&nbsp;</div>
-  <p>
-    <label>Day of year</label>
-    <input type="range" min="1" max="365" value="50" class="slider" id="myRange">
-  </p>
-  <p>
-    <label>Solution to show&nbsp;<span id="nAlt"></span></label>
-    <input type="range" min="1" max="1" value="1" class="slider" id="alt">
-  </p>
-
+  <div class="settings">
+    <p>
+      <label>Day of year&nbsp;<span id="date">&nbsp;</span></label>
+      <input type="range" min="1" max="365" value="50" class="slider" id="myRange">
+    </p>
+    <p>
+      <label>Max number of solutions&nbsp;<span id="noalt"></span></label>
+      <input type="range" min="1" max="3000" value="1" class="slider" id="altmax">
+    </p>
+    <p>
+      <label>Solution to show&nbsp;<span id="nAlt"></span></label>
+      <input type="range" min="1" max="1" value="1" class="slider" id="alt">
+    </p>
+  </div>
 </body>
 <script>
 
@@ -139,6 +179,7 @@
   const dateElm = document.getElementById('date');
   const alt = document.getElementById('alt');
   const altmax = document.getElementById('altmax');
+  const nAlt = document.getElementById('nAlt');
   const monthNames = [
     'Jan',
     'Feb',
@@ -162,12 +203,17 @@
     'Fri',
     'Sat'
   ];
+
+  const getSpan = (text) => {
+    return `<span class="dayspan">${text}</span>`;
+  }
+
   const plotSolution = (s, days, date) => {
 
     let nr = 0;
     grid.innerHTML = '';
     s.forEach(row => {
-      const rowElm = document.createElement('div');
+      //const rowElm = document.createElement('div');
       row.forEach(value => {
         const cell = document.createElement('div');
         cell.className = (value === ' ') ? 'blank' : 'v-' + value;
@@ -176,19 +222,20 @@
         if (days.includes(nr)) {
           const idx = days.indexOf(nr);
           if (idx === 2) {
-            cell.innerHTML = monthNames[date.getMonth()];
+            cell.innerHTML = getSpan(monthNames[date.getMonth()]);
           }
           else if (idx === 1) {
-            cell.innerHTML = dayNames[date.getDay()];
+            cell.innerHTML = getSpan(dayNames[date.getDay()]);
           }
           else if (idx === 0) {
-            cell.innerHTML = date.getDate();
+            cell.innerHTML = getSpan(date.getDate());
           }
+          cell.classList.add('day');
         }
         nr++;
-        rowElm.appendChild(cell);
+        grid.appendChild(cell);
       });
-      grid.appendChild(rowElm);
+      //grid.appendChild(rowElm);
     });
   }
 
@@ -202,15 +249,12 @@
   });
 
   alt.addEventListener('input', (e) => {
-
     plotOther(e.target.value - 0);
   });
 
   let runDate = (date) => {
     var s = Date.now();
-
     var dayIndexes = getDateIndexes(date);
-
     const solutions = Module.get_solutions(noSolutions, dayIndexes[0], dayIndexes[1], dayIndexes[2]).split('\n');
     if (solutions.length < 2) {
       console.log('fail:', dayIndexes, date);
@@ -218,32 +262,29 @@
 
     daySolutions = parseSolutions(solutions);
     alt.max = daySolutions.length - 2;
-    document.getElementById('nAlt').innerHTML = `${daySolutions.length - 1} (${Date.now() - s}ms)`;
+    nAlt.innerHTML = `${daySolutions.length - 1} (${Date.now() - s}ms)`;
     plotSolution(daySolutions[0], dayIndexes, date);
     plotOther = (nr) => {
       plotSolution(daySolutions[nr], dayIndexes, date);
     }
-
-    //console.log('took:', Date.now() - s);
   }
 
   var Module = {
 
     onRuntimeInitialized: function () {
       runDate(new Date());
-      document.getElementById('myRange').addEventListener('input', (e) => {
+      const rangeElm = document.getElementById('myRange');
+      rangeElm.addEventListener('input', (e) => {
         const selDate = getDateFromDayOfYear(e.target.value - 0);
         dateElm.innerHTML = selDate.toLocaleDateString('sv-SE');
         if (noSolutions < 100) {
           runDate(selDate)
         }
-        //console.log(e.target.value);
       });
-      document.getElementById('myRange').addEventListener('change', (e) => {
+      rangeElm.addEventListener('change', (e) => {
         if (noSolutions > 99) {
           runDate(getDateFromDayOfYear(e.target.value - 0))
         }
-        //console.log(e.target.value);
       });
     }
   };
