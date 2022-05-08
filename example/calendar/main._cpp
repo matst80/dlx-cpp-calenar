@@ -1,0 +1,38 @@
+#include "Polyomino.hpp"
+#include <chrono>
+#include <dlx/AlgorithmDLX.hpp>
+
+using namespace std;
+
+int main()
+{
+  auto start = chrono::steady_clock::now();
+  auto calendar_problem = Polyomino(Shape::calendarPieces(), {
+                                                                 {1, 1, 1, 1, 0, 1, 0},
+                                                                 {1, 1, 1, 1, 1, 1, 0},
+                                                                 {1, 1, 1, 1, 1, 1, 1},
+                                                                 {0, 1, 1, 1, 1, 1, 1},
+                                                                 {1, 1, 1, 1, 1, 1, 1},
+                                                                 {1, 1, 1, 1, 1, 1, 1},
+                                                                 {0, 1, 1, 1, 1, 1, 1},
+                                                                 {0, 0, 0, 0, 1, 1, 1},
+                                                             });
+  auto result = AlgorithmDLX(calendar_problem.problem()).search();
+  auto end = chrono::steady_clock::now();
+
+  for (const auto &used_rows : result.solutions)
+  {
+    auto solution = calendar_problem.make_solution(used_rows);
+    for (const auto &line : solution)
+    {
+      cout << line << '\n';
+    }
+    cout << '\n';
+  }
+
+  cout << "Elapsed time in milliseconds: "
+       << chrono::duration_cast<chrono::milliseconds>(end - start).count()
+       << " ms" << endl;
+
+  cout << result.number_of_solutions << '\n';
+}

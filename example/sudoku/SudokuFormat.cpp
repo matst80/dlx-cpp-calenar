@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <set>
 #include <unordered_set>
+#include <stdexcept>
 
 SudokuFormat::SudokuFormat(std::string format)
   : SudokuFormat{SudokuType::guess(format), std::move(format)}

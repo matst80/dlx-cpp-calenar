@@ -5,6 +5,7 @@
 #include <functional>
 #include <unordered_map>
 #include <unordered_set>
+#include <stdexcept>
 
 SudokuType::SudokuType()
   : SudokuType(9)

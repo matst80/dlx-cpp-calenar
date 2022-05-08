@@ -1,13 +1,23 @@
 CXX ?= g++
-CXXFLAGS += -Iinclude -std=c++11 -pedantic -Wall -O2
-
+ECXX ?= emcc
+CXXFLAGS += -Iinclude -std=c++11 -pedantic -Wall -O3
+ECXXFLAGS += -lembind -Iinclude -pedantic -Wall -O3 -o test.js 
 LIB_SRC = src/*.cpp
 
 all: examples
 
+calendarems:
+	mkdir -p build
+	$(ECXX) $(ECXXFLAGS) $(LIB_SRC) example/calendar/*.cpp
+
+calendar:
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) -o build/calendar $(LIB_SRC) example/calendar/*.cpp
+
 examples:
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -o build/dlx $(LIB_SRC) example/dlx/*.cpp
+	$(CXX) $(CXXFLAGS) -o build/calendar $(LIB_SRC) example/calendar/*.cpp
 	$(CXX) $(CXXFLAGS) -o build/sudoku $(LIB_SRC) example/sudoku/*.cpp
 	$(CXX) $(CXXFLAGS) -o build/langford $(LIB_SRC) example/langford/*.cpp
 	$(CXX) $(CXXFLAGS) -o build/nqueens $(LIB_SRC) example/nqueens/*.cpp

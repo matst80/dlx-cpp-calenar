@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include <algorithm>
+#include <stdexcept>
 
 Sudoku::Sudoku()
   : Sudoku(std::make_shared<SudokuType>())

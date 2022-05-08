@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  #grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #grid>div {
+    display: flex;
+    flex-direction: row;
+  }
+
+  #grid>div>div {
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 80px;
+    font-size: 18px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .v-P {
+    background-color: #1abc9c;
+  }
+
+  .v-C {
+    background-color: #2ecc71;
+  }
+
+  .v-l {
+    background-color: #3498db;
+  }
+
+  .v-L {
+    background-color: #9b59b6;
+  }
+
+  .v-W {
+    background-color: #34495e;
+  }
+
+  .v-Z {
+    background-color: #f1c40f;
+  }
+
+  .v-N {
+    background-color: #e67e22;
+  }
+
+  .v-I {
+    background-color: #e74c3c;
+  }
+
+  .v-V {
+    background-color: #8e44ad;
+  }
+
+  .v-T {
+    background-color: #bdc3c7;
+  }
+
+  .blank {
+    background-color: #fff;
+  }
+
+  input {
+    width: 100%;
+  }
+</style>
+
+<body>
+  <p>
+    <label>Max number of solutions&nbsp;<span id="noalt"></span></label>
+    <input type="range" min="1" max="3000" value="1" class="slider" id="altmax">
+  </p>
+  <div id="grid">
+  </div>
+  <div id="date">&nbsp;</div>
+  <p>
+    <label>Day of year</label>
+    <input type="range" min="1" max="365" value="50" class="slider" id="myRange">
+  </p>
+  <p>
+    <label>Solution to show&nbsp;<span id="nAlt"></span></label>
+    <input type="range" min="1" max="1" value="1" class="slider" id="alt">
+  </p>
+
+</body>
+<script>
+
+  Date.prototype.addDays = function (days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+  }
+
+  const dayNameStart = 6 * 7 + 3;
+  const dateStart = 13;
+
+  const getDateIndexes = (date) => {
+    const day = date.getDay();
+    const month = date.getMonth();
+    const monthIdx = (month > 5) ? (month + 1) : month;
+    const dayIdx = day > 3 ? day + 4 : day;
+
+    return [dateStart + date.getDate(), dayNameStart + dayIdx, monthIdx];
+  }
+
+  const currYear = new Date().getFullYear();
+
+  const getDateFromDayOfYear = (dayOfYear) => {
+    var start = new Date(currYear, 0, 0);
+    var date = start.addDays(dayOfYear);
+    return date;
+  }
+
+  const parseSolutions = (lines) => {
+    const result = [];
+    let s = [];
+    lines.forEach(line => {
+      if (line === '') {
+        result.push(s);
+        s = [];
+      }
+      else {
+        s.push(line.split(''));
+      }
+    })
+    return result;
+  }
+  const grid = document.getElementById('grid');
+  const dateElm = document.getElementById('date');
+  const alt = document.getElementById('alt');
+  const altmax = document.getElementById('altmax');
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
+  const dayNames = [
+    'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat'
+  ];
+  const plotSolution = (s, days, date) => {
+
+    let nr = 0;
+    grid.innerHTML = '';
+    s.forEach(row => {
+      const rowElm = document.createElement('div');
+      row.forEach(value => {
+        const cell = document.createElement('div');
+        cell.className = (value === ' ') ? 'blank' : 'v-' + value;
+        cell.innerHTML = '&nbsp';
+
+        if (days.includes(nr)) {
+          const idx = days.indexOf(nr);
+          if (idx === 2) {
+            cell.innerHTML = monthNames[date.getMonth()];
+          }
+          else if (idx === 1) {
+            cell.innerHTML = dayNames[date.getDay()];
+          }
+          else if (idx === 0) {
+            cell.innerHTML = date.getDate();
+          }
+        }
+        nr++;
+        rowElm.appendChild(cell);
+      });
+      grid.appendChild(rowElm);
+    });
+  }
+
+  let plotOther;
+
+  let noSolutions = 1;
+
+  altmax.addEventListener('change', (e) => {
+    noSolutions = e.target.value - 0;
+    runDate(getDateFromDayOfYear(document.getElementById('myRange').value - 1));
+  });
+
+  alt.addEventListener('input', (e) => {
+
+    plotOther(e.target.value - 0);
+  });
+
+  let runDate = (date) => {
+    var s = Date.now();
+
+    var dayIndexes = getDateIndexes(date);
+
+    const solutions = Module.get_solutions(noSolutions, dayIndexes[0], dayIndexes[1], dayIndexes[2]).split('\n');
+    if (solutions.length < 2) {
+      console.log('fail:', dayIndexes, date);
+    }
+
+    daySolutions = parseSolutions(solutions);
+    alt.max = daySolutions.length - 2;
+    document.getElementById('nAlt').innerHTML = `${daySolutions.length - 1} (${Date.now() - s}ms)`;
+    plotSolution(daySolutions[0], dayIndexes, date);
+    plotOther = (nr) => {
+      plotSolution(daySolutions[nr], dayIndexes, date);
+    }
+
+    //console.log('took:', Date.now() - s);
+  }
+
+  var Module = {
+
+    onRuntimeInitialized: function () {
+      runDate(new Date());
+      document.getElementById('myRange').addEventListener('input', (e) => {
+        const selDate = getDateFromDayOfYear(e.target.value - 0);
+        dateElm.innerHTML = selDate.toLocaleDateString('sv-SE');
+        if (noSolutions < 100) {
+          runDate(selDate)
+        }
+        //console.log(e.target.value);
+      });
+      document.getElementById('myRange').addEventListener('change', (e) => {
+        if (noSolutions > 99) {
+          runDate(getDateFromDayOfYear(e.target.value - 0))
+        }
+        //console.log(e.target.value);
+      });
+    }
+  };
+</script>
+<script src="test.js"></script>
+
+</html>
