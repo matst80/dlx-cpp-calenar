@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dlx-calendar
+spec:
+  selector:
+    matchLabels:
+      app: dlx-calendar
+  template:
+    metadata:
+      labels:
+        app: dlx-calendar
+    spec:
+      containers:
+        - name: dlx-calendar
+          image: registry.knatofs.se/calendar
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: calendar-web
+spec:
+  selector:
+    app: dlx-calendar
+  ports:
+    - port: 80
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cal-torberg-me
+spec:
+  dnsNames:
+    - "cal.tornberg.me"
+  secretName: cal-torberg-me
+  issuerRef:
+    name: le-global-issuer
+    kind: ClusterIssuer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calendar-external
+  labels:
+    name: calendar-external
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: cal.tornberg.me
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: calendar-web
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - "cal.tornberg.me"
+      secretName: cal-torberg-me
